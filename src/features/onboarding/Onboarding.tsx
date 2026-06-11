@@ -32,15 +32,11 @@ export default function Onboarding() {
     if (!session) return
     setBusy(true); setError(null)
     try {
-      const { data: h, error: e1 } = await supabase
-        .from('households').insert({ name }).select().single()
-      if (e1) throw e1
-      const { error: e2 } = await supabase.from('household_members')
-        .insert({ household_id: h.id, user_id: session.user.id, display_name: displayName })
-      if (e2) throw e2
-      const { error: e3 } = await supabase.from('categories')
-        .insert(DEFAULT_CATEGORIES.map((c) => ({ ...c, household_id: h.id })))
-      if (e3) throw e3
+      const { error } = await supabase.rpc('create_household', {
+        household_name: name,
+        member_name: displayName,
+      })
+      if (error) throw error
       await refreshHousehold(); await refreshCategories()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado')
