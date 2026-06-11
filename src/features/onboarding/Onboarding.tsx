@@ -3,21 +3,6 @@ import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { useApp } from '../../context/AppContext'
 
-const DEFAULT_CATEGORIES = [
-  { name: 'Salario', emoji: '💼', kind: 'income' },
-  { name: 'Otros ingresos', emoji: '✨', kind: 'income' },
-  { name: 'Vivienda', emoji: '🏠', kind: 'expense' },
-  { name: 'Mercado', emoji: '🛒', kind: 'expense' },
-  { name: 'Restaurantes', emoji: '🍽️', kind: 'expense' },
-  { name: 'Transporte', emoji: '🚇', kind: 'expense' },
-  { name: 'Servicios', emoji: '💡', kind: 'expense' },
-  { name: 'Suscripciones', emoji: '📺', kind: 'expense' },
-  { name: 'Salud', emoji: '🩺', kind: 'expense' },
-  { name: 'Ocio', emoji: '🎉', kind: 'expense' },
-  { name: 'Familia Colombia', emoji: '🇨🇴', kind: 'expense' },
-  { name: 'Otros', emoji: '🏷️', kind: 'expense' },
-] as const
-
 export default function Onboarding() {
   const { session, refreshHousehold, refreshCategories } = useApp()
   const [tab, setTab] = useState<'create' | 'join'>('create')
