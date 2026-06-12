@@ -7,6 +7,7 @@ import { useApp } from '../../context/AppContext'
 import { useTransactions } from '../transactions/useTransactions'
 import MonthPicker from '../../components/MonthPicker'
 import { convert, formatMoney, sumIn } from '../../lib/money'
+import BudgetSection from './BudgetSection'
 import { supabase } from '../../lib/supabase'
 import type { Transaction } from '../../types'
 
@@ -114,6 +115,11 @@ export default function Dashboard() {
           </motion.div>
         ))}
       </div>
+
+      {/* Presupuestos del mes */}
+      <motion.div custom={2.5} variants={cardVariants} initial="hidden" animate="show">
+        <BudgetSection categories={categories} monthTxs={monthTxs} />
+      </motion.div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Donut por categoría */}
