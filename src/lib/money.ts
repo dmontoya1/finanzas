@@ -41,3 +41,25 @@ export function budgetProgress(category: Category, monthTxs: Transaction[]): Bud
     currency: category.budget_currency,
   }
 }
+
+export interface MonthProjection {
+  projectedExpense: number
+  projectedBalance: number
+}
+
+/** Proyección de cierre de mes por ritmo diario de gasto.
+ *  Los ingresos no se extrapolan (son puntuales, tipo nómina):
+ *  balance proyectado = ingresos actuales − gasto proyectado.
+ *  null si aún no hay gastos en el mes. */
+export function projectMonth(
+  monthTxs: Pick<Transaction, 'amount' | 'currency' | 'fx_rate' | 'type'>[],
+  view: Currency,
+  dayOfMonth: number,
+  daysInMonth: number,
+): MonthProjection | null {
+  const expense = sumIn(monthTxs.filter((t) => t.type === 'expense'), view)
+  if (expense === 0) return null
+  const income = sumIn(monthTxs.filter((t) => t.type === 'income'), view)
+  const projectedExpense = (expense / dayOfMonth) * daysInMonth
+  return { projectedExpense, projectedBalance: income - projectedExpense }
+}

@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { endOfMonth, format, startOfMonth, subMonths } from 'date-fns'
+import { endOfMonth, format, getDaysInMonth, startOfMonth, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { useApp } from '../../context/AppContext'
 import { useTransactions } from '../transactions/useTransactions'
 import MonthPicker from '../../components/MonthPicker'
-import { convert, formatMoney, sumIn } from '../../lib/money'
+import { convert, formatMoney, projectMonth, sumIn } from '../../lib/money'
 import BudgetSection from './BudgetSection'
 import { supabase } from '../../lib/supabase'
 import type { Transaction } from '../../types'
@@ -37,6 +37,12 @@ export default function Dashboard() {
   const expense = sumIn(monthTxs.filter((t) => t.type === 'expense'), viewCurrency)
   const balance = income - expense
   const pending = transactions.filter((t) => t.status === 'pending_review')
+
+  // Proyección: solo el mes en curso tiene futuro que estimar
+  const today = new Date()
+  const projection = monthKey === format(today, 'yyyy-MM')
+    ? projectMonth(monthTxs, viewCurrency, today.getDate(), getDaysInMonth(today))
+    : null
 
   const byCategory = useMemo(() => {
     const map = new Map<string, number>()
@@ -103,15 +109,24 @@ export default function Dashboard() {
       {/* Tarjetas resumen */}
       <div className="grid gap-4 sm:grid-cols-3">
         {[
-          { label: 'Ingresos', value: income, color: 'text-mint' },
-          { label: 'Gastos', value: expense, color: 'text-coral' },
-          { label: 'Balance', value: balance, color: balance >= 0 ? 'text-mint' : 'text-coral' },
+          { label: 'Ingresos', value: income, color: 'text-mint', sub: null as string | null, subColor: '' },
+          {
+            label: 'Gastos', value: expense, color: 'text-coral',
+            sub: projection ? `→ ~${formatMoney(projection.projectedExpense, viewCurrency)} a fin de mes` : null,
+            subColor: 'text-cream-faint',
+          },
+          {
+            label: 'Balance', value: balance, color: balance >= 0 ? 'text-mint' : 'text-coral',
+            sub: projection ? `proyección: ~${formatMoney(projection.projectedBalance, viewCurrency)}` : null,
+            subColor: projection && projection.projectedBalance >= 0 ? 'text-mint/70' : 'text-coral/70',
+          },
         ].map((c, i) => (
           <motion.div key={c.label} custom={i} variants={cardVariants} initial="hidden" animate="show" className="card p-5">
             <p className="text-sm uppercase tracking-widest text-cream-faint">{c.label}</p>
             <p className={`num mt-2 text-2xl font-semibold sm:text-3xl ${c.color}`}>
               {loading ? '—' : formatMoney(c.value, viewCurrency)}
             </p>
+            {!loading && c.sub && <p className={`num mt-1 text-xs ${c.subColor}`}>{c.sub}</p>}
           </motion.div>
         ))}
       </div>
