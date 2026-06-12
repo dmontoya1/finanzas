@@ -1,4 +1,4 @@
-import type { Currency, Transaction } from '../types'
+import type { Category, Currency, Transaction } from '../types'
 
 const fmtEUR = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' })
 const fmtCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
@@ -15,4 +15,29 @@ export function convert(tx: Pick<Transaction, 'amount' | 'currency' | 'fx_rate'>
 
 export function sumIn(txs: Pick<Transaction, 'amount' | 'currency' | 'fx_rate'>[], view: Currency): number {
   return txs.reduce((acc, t) => acc + convert(t, view), 0)
+}
+
+export interface BudgetProgress {
+  spent: number
+  limit: number
+  /** spent / limit; > 1 = pasado del tope */
+  ratio: number
+  currency: Currency
+}
+
+/** Progreso del presupuesto de una categoría contra las transacciones del mes.
+ *  null si la categoría no tiene tope. Convierte cada gasto a la moneda del
+ *  presupuesto con su tasa histórica. */
+export function budgetProgress(category: Category, monthTxs: Transaction[]): BudgetProgress | null {
+  if (category.budget_amount == null || category.budget_currency == null) return null
+  const spent = sumIn(
+    monthTxs.filter((t) => t.type === 'expense' && t.category_id === category.id),
+    category.budget_currency,
+  )
+  return {
+    spent,
+    limit: category.budget_amount,
+    ratio: spent / category.budget_amount,
+    currency: category.budget_currency,
+  }
 }
