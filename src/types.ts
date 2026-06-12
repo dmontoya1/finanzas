@@ -33,7 +33,23 @@ export interface Transaction {
   category_id: string | null
   description: string | null
   merchant: string | null
-  source: 'manual' | 'apple_pay'
+  source: 'manual' | 'apple_pay' | 'recurring'
   occurred_at: string
+  created_at: string
+  recurring_rule_id: string | null
+  /** Mes generado por regla recurrente, formato yyyy-MM */
+  recurring_month: string | null
+}
+
+export interface RecurringRule {
+  id: string
+  household_id: string
+  type: TxType
+  amount: number
+  currency: Currency
+  category_id: string | null
+  description: string
+  day_of_month: number
+  active: boolean
   created_at: string
 }

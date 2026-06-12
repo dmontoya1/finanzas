@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { generateDueRecurring } from '../lib/recurring'
 import type { Category, Currency, Household } from '../types'
 
 interface AppState {
@@ -61,6 +62,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     refreshHousehold().then(refreshCategories)
   }, [session, refreshHousehold, refreshCategories])
+
+  // Recurrentes: una sola generación por sesión, sin bloquear el render
+  const recurringDone = useRef(false)
+  useEffect(() => {
+    if (!household || recurringDone.current) return
+    recurringDone.current = true
+    generateDueRecurring(household.id)
+  }, [household])
 
   return (
     <Ctx.Provider value={{ session, loading, household, categories, viewCurrency, setViewCurrency, refreshHousehold, refreshCategories }}>

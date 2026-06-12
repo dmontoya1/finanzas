@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useApp } from '../../context/AppContext'
 import { supabase } from '../../lib/supabase'
+import { formatMoney } from '../../lib/money'
+import type { Category, Currency, RecurringRule, TxType } from '../../types'
 
 interface Rule { id: string; pattern: string; category_id: string }
 
@@ -106,7 +108,122 @@ export default function SettingsPage() {
         </ul>
       </section>
 
+      <RecurringSection householdId={household.id} categories={categories} />
+
       <button className="btn btn-ghost" onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>
     </div>
+  )
+}
+
+function RecurringSection({ householdId, categories }: { householdId: string; categories: Category[] }) {
+  const [rules, setRules] = useState<RecurringRule[]>([])
+  const [description, setDescription] = useState('')
+  const [amount, setAmount] = useState('')
+  const [currency, setCurrency] = useState<Currency>('EUR')
+  const [type, setType] = useState<TxType>('expense')
+  const [categoryId, setCategoryId] = useState('')
+  const [day, setDay] = useState('1')
+
+  useEffect(() => { load() }, [householdId])
+
+  async function load() {
+    const { data } = await supabase.from('recurring_rules').select('*').order('day_of_month')
+    setRules((data as RecurringRule[]) ?? [])
+  }
+
+  async function add(e: FormEvent) {
+    e.preventDefault()
+    const value = Number(amount)
+    if (!Number.isFinite(value) || value <= 0) return
+    await supabase.from('recurring_rules').insert({
+      household_id: householdId,
+      description, type, currency,
+      amount: value,
+      category_id: categoryId || null,
+      day_of_month: Number(day),
+    })
+    setDescription(''); setAmount(''); setCategoryId('')
+    load()
+  }
+
+  async function toggle(r: RecurringRule) {
+    await supabase.from('recurring_rules').update({ active: !r.active }).eq('id', r.id)
+    load()
+  }
+
+  async function remove(id: string) {
+    if (!confirm('¿Eliminar la regla? Las transacciones ya generadas se conservan.')) return
+    await supabase.from('recurring_rules').delete().eq('id', id)
+    load()
+  }
+
+  return (
+    <section className="card space-y-4 p-5">
+      <h3 className="font-semibold">🔁 Recurrentes</h3>
+      <p className="text-sm text-cream-dim">
+        Alquiler, nómina, suscripciones… se registran solas el día elegido de cada mes (al abrir la app).
+      </p>
+      <form onSubmit={add} className="flex flex-wrap items-end gap-3">
+        <div className="min-w-36 flex-1">
+          <label className="mb-1 block text-xs text-cream-faint">Descripción</label>
+          <input required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ej. Alquiler" />
+        </div>
+        <div className="w-28">
+          <label className="mb-1 block text-xs text-cream-faint">Monto</label>
+          <input required type="number" min="0.01" step="0.01" inputMode="decimal"
+            value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-cream-faint">Moneda</label>
+          <select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} className="w-auto">
+            <option value="EUR">EUR</option>
+            <option value="COP">COP</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-cream-faint">Tipo</label>
+          <select value={type} onChange={(e) => { setType(e.target.value as TxType); setCategoryId('') }} className="w-auto">
+            <option value="expense">Gasto</option>
+            <option value="income">Ingreso</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-cream-faint">Categoría</label>
+          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-auto">
+            <option value="">Sin categoría</option>
+            {categories.filter((c) => c.kind === type).map((c) => (
+              <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="w-20">
+          <label className="mb-1 block text-xs text-cream-faint">Día (1-28)</label>
+          <input required type="number" min="1" max="28" value={day} onChange={(e) => setDay(e.target.value)} />
+        </div>
+        <button className="btn btn-primary">Añadir</button>
+      </form>
+      <ul className="space-y-2">
+        {rules.map((r) => {
+          const cat = categories.find((c) => c.id === r.category_id)
+          return (
+            <li key={r.id}
+              className={`flex flex-wrap items-center justify-between gap-2 rounded-xl bg-ink-950/60 px-4 py-2.5 text-sm ${r.active ? '' : 'opacity-50'}`}>
+              <span>
+                {r.type === 'income' ? '💰' : '💸'} <span className="font-medium">{r.description}</span>
+                {' · '}<span className="num">{formatMoney(r.amount, r.currency)}</span>
+                {' · '}el {r.day_of_month} de cada mes
+                {cat && <> · {cat.emoji} {cat.name}</>}
+              </span>
+              <span className="flex items-center gap-3">
+                <button onClick={() => toggle(r)} className="text-cream-faint hover:text-cream">
+                  {r.active ? 'Pausar' : 'Activar'}
+                </button>
+                <button onClick={() => remove(r.id)} className="text-cream-faint hover:text-coral">✕</button>
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }
