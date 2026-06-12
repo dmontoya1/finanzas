@@ -15,6 +15,9 @@ export interface Category {
   name: string
   emoji: string
   kind: TxType
+  /** Tope mensual fijo; null = sin presupuesto. Ambos campos van juntos. */
+  budget_amount: number | null
+  budget_currency: Currency | null
 }
 
 export interface Transaction {
