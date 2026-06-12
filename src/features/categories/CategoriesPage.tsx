@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { useApp } from '../../context/AppContext'
 import { supabase } from '../../lib/supabase'
-import type { TxType } from '../../types'
+import type { Category, Currency, TxType } from '../../types'
 
 export default function CategoriesPage() {
   const { household, categories, refreshCategories } = useApp()
@@ -63,15 +63,63 @@ export default function CategoriesPage() {
             {categories.filter((c) => c.kind === g.kind).map((c, i) => (
               <motion.div key={c.id}
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                className="card group flex items-center justify-between px-4 py-3">
-                <span className="font-medium">{c.emoji} {c.name}</span>
-                <button onClick={() => remove(c.id)}
-                  className="text-cream-faint opacity-100 transition hover:text-coral sm:opacity-0 sm:group-hover:opacity-100">✕</button>
+                className="card group px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{c.emoji} {c.name}</span>
+                  <button onClick={() => remove(c.id)}
+                    className="text-cream-faint opacity-100 transition hover:text-coral sm:opacity-0 sm:group-hover:opacity-100">✕</button>
+                </div>
+                {c.kind === 'expense' && <BudgetEditor category={c} onSaved={refreshCategories} />}
               </motion.div>
             ))}
           </div>
         </section>
       ))}
+    </div>
+  )
+}
+
+function BudgetEditor({ category, onSaved }: { category: Category; onSaved: () => void }) {
+  const [amount, setAmount] = useState(category.budget_amount?.toString() ?? '')
+  const [currency, setCurrency] = useState<Currency>(category.budget_currency ?? 'EUR')
+  const [error, setError] = useState<string | null>(null)
+
+  async function save(curr: Currency) {
+    const value = amount.trim() === '' ? null : Number(amount)
+    if (value !== null && (!Number.isFinite(value) || value <= 0)) {
+      setError('Tope inválido')
+      return
+    }
+    // Sin cambios: no toques la red
+    if (value === category.budget_amount && (value === null || curr === category.budget_currency)) return
+    setError(null)
+    const { error } = await supabase.from('categories')
+      .update({ budget_amount: value, budget_currency: value === null ? null : curr })
+      .eq('id', category.id)
+    if (error) setError(error.message)
+    else onSaved()
+  }
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-center gap-2">
+        <input
+          type="number" min="0" step="0.01" inputMode="decimal"
+          value={amount} placeholder="Tope mensual"
+          onChange={(e) => setAmount(e.target.value)}
+          onBlur={() => save(currency)}
+          className="w-28 text-sm"
+        />
+        <select
+          value={currency}
+          onChange={(e) => { const c = e.target.value as Currency; setCurrency(c); save(c) }}
+          className="w-auto text-sm"
+        >
+          <option value="EUR">EUR</option>
+          <option value="COP">COP</option>
+        </select>
+      </div>
+      {error && <p className="mt-1 text-xs text-coral">{error}</p>}
     </div>
   )
 }
