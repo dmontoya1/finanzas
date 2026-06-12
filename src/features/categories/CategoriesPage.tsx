@@ -104,7 +104,7 @@ function BudgetEditor({ category, onSaved }: { category: Category; onSaved: () =
     <div className="mt-2">
       <div className="flex items-center gap-2">
         <input
-          type="number" min="0" step="0.01" inputMode="decimal"
+          type="number" min="0.01" step="0.01" inputMode="decimal"
           value={amount} placeholder="Tope mensual"
           onChange={(e) => setAmount(e.target.value)}
           onBlur={() => save(currency)}
