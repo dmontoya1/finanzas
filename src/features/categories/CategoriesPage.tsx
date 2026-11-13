@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 import { supabase } from '../../lib/supabase'
 import type { Category, Currency, TxType } from '../../types'
 

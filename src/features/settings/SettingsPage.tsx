@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 import { supabase } from '../../lib/supabase'
 import { formatMoney } from '../../lib/money'
 import type { Category, Currency, RecurringRule, TxType } from '../../types'

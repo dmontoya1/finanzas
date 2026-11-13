@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { useApp } from './context/AppContext'
+import { useApp } from './context/useApp'
 import AuthPage from './features/auth/AuthPage'
 import Onboarding from './features/onboarding/Onboarding'
 import Layout from './components/Layout'

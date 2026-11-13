@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/useApp'
 import type { Currency } from '../types'
 
 const NAV = [

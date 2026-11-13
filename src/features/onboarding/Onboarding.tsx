@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 
 export default function Onboarding() {
   const { session, refreshHousehold, refreshCategories } = useApp()

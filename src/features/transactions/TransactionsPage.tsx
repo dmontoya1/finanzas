@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { endOfMonth, format, startOfMonth } from 'date-fns'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 import { useTransactions } from './useTransactions'
 import TransactionModal from './TransactionModal'
 import MonthPicker from '../../components/MonthPicker'

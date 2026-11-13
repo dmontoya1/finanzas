@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 import { supabase } from '../../lib/supabase'
 import { getEurCopRate } from '../../lib/fx'
 import type { Currency, Transaction, TxType } from '../../types'
