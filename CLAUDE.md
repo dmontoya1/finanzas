@@ -33,7 +33,7 @@ Personal/household bi-currency budget app (COP ⇄ EUR). Stack: React 19, Vite, 
 
 ```
 src/
-  lib/            # supabase client, fx rate (12h cache + fallback), money conversion
+  lib/            # supabase client, fx rate (12h cache + fallback), money (convert/sum/budget/projection), recurring generator
   context/        # AppProvider: session, household, categories, view currency
   features/       # auth · onboarding · dashboard · transactions · categories · settings
   components/     # Layout, MonthPicker (shared UI)
@@ -45,14 +45,22 @@ src/
 Every `Transaction` stores `fx_rate` (COP per 1 EUR at the time of the transaction). This freezes history — if the rate changes later, past figures stay correct. All conversion goes through `src/lib/money.ts`:
 
 - `convert(tx, viewCurrency)` — single transaction to view currency using its own `fx_rate`
-- `sumIn(txs, viewCurrency)` — aggregate totals
+- `sumIn(txs, viewCurrency)` — aggregate totals (also the base for `budgetProgress` / `projectMonth`)
 - Never convert using a live rate when displaying historical data.
 
 ### Supabase schema
 
-Main tables: `households`, `household_members`, `categories`, `merchant_rules`, `transactions`. RLS is enabled on all tables. Membership is checked via a `security definer` function `is_member(uuid)` to avoid infinite recursion in policies.
+Schema lives in `supabase/migrations/000N_*.sql`, applied **manually** via Supabase Dashboard > SQL Editor (no CLI migration flow). New schema change = new numbered file.
+
+Main tables: `households`, `household_members`, `categories`, `merchant_rules`, `transactions`, `recurring_rules`. RLS is enabled on all tables. Membership is checked via a `security definer` function `is_member(uuid)` to avoid infinite recursion in policies.
 
 Joining a household uses the `join_household(code, name)` RPC (security definer) — do not expose the `households` table directly for invite-code lookups.
+
+### Budgets, recurring, projection
+
+- **Budgets**: `categories.budget_amount` + `budget_currency` (both set or both null, DB check). `budgetProgress()` in `money.ts` converts each expense to the *budget's* currency with its own `fx_rate`.
+- **Recurring**: `recurring_rules` (day 1–28) are materialized client-side by `generateDueRecurring` (`lib/recurring.ts`), called once per session from `AppContext` after the household loads. Idempotent via unique index `(recurring_rule_id, recurring_month)`; a `23505` error means another device won the race and is ignored. Generated txs use `source: 'recurring'` and the *current* FX rate at generation time. Never throws.
+- **Projection**: `projectMonth()` in `money.ts` extrapolates expenses by daily pace; income is not extrapolated. Only shown for the current month in `Dashboard`.
 
 ### Apple Pay webhook
 
