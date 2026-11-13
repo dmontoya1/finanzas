@@ -1,67 +1,81 @@
 @import "tailwindcss";
 
-/* ===== Tema: "Ledger nocturno" — verde tinta profundo + crema + ámbar ===== */
+/* Light theme. Hex values are mirrored in src/lib/theme.ts for Recharts; keep both in sync. */
 @theme {
-  --color-ink-950: #0c120e;
-  --color-ink-900: #101713;
-  --color-ink-800: #18221c;
-  --color-ink-700: #223028;
-  --color-ink-600: #33453a;
-  --color-cream: #f2ecdd;
-  --color-cream-dim: #b9b4a3;
-  --color-cream-faint: #7d796c;
-  --color-mint: #7fd8a4;
-  --color-mint-deep: #2e6b48;
-  --color-coral: #ff8d6b;
-  --color-amber: #e8b454;
+  /* Surfaces and text */
+  --color-surface: #faf7f0;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunk: #ece7da;
+  --color-line: #d6d0c0;
+  --color-text: #17201b;
+  --color-text-soft: #4a5550;
+  --color-text-faint: #5f6965;
+
+  /* Semantic accents: *-ink is AA-safe as text, *-fill is for fills/charts */
+  --color-positive: #0f7a45;
+  --color-positive-fill: #1fb86b;
+  --color-negative: #c2361f;
+  --color-negative-fill: #ff6b4a;
+  --color-warning: #8a5300;
+  --color-warning-fill: #f5a524;
+  --color-brand: #5b3df5;
+  --color-brand-2: #ff5d8f;
+
+  /* Legacy aliases for unmigrated screens; removed in T7 */
+  --color-ink-950: #faf7f0;
+  --color-ink-900: #ffffff;
+  --color-ink-800: #ffffff;
+  --color-ink-700: #ece7da;
+  --color-ink-600: #d6d0c0;
+  --color-cream: #17201b;
+  --color-cream-dim: #4a5550;
+  --color-cream-faint: #5f6965;
+  --color-mint: #0f7a45;
+  --color-mint-deep: #d9f2e3;
+  --color-coral: #c2361f;
+  --color-amber: #8a5300;
+
   --font-display: "Fraunces", serif;
   --font-body: "Albert Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 }
 
-html { background: var(--color-ink-950); }
+html { background: var(--color-surface); }
 body {
   font-family: var(--font-body);
-  color: var(--color-cream);
-  background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(127,216,164,0.07), transparent 60%),
-    radial-gradient(900px 500px at -10% 100%, rgba(232,180,84,0.05), transparent 55%),
-    var(--color-ink-950);
+  color: var(--color-text);
+  background: var(--color-surface);
   min-height: 100dvh;
 }
 
-/* Grano sutil de papel sobre todo */
-body::after {
-  content: "";
-  position: fixed; inset: 0; pointer-events: none; z-index: 50;
-  opacity: 0.05;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
-}
-
 .card {
-  background: linear-gradient(160deg, var(--color-ink-800), var(--color-ink-900));
-  border: 1px solid rgba(242,236,221,0.08);
+  background: var(--color-surface-raised);
+  border: 1px solid rgba(23,32,27,0.08);
   border-radius: 1.25rem;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+  box-shadow: 0 1px 2px rgba(23,32,27,0.04), 0 8px 24px rgba(23,32,27,0.06);
 }
 .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .display { font-family: var(--font-display); }
 
 input, select, textarea {
-  background: var(--color-ink-950);
-  border: 1px solid rgba(242,236,221,0.12);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
   border-radius: 0.75rem;
   padding: 0.6rem 0.85rem;
-  color: var(--color-cream);
+  color: var(--color-text);
   width: 100%;
+  font-size: 16px; /* prevents iOS zoom on focus */
   outline: none;
   transition: border-color .15s, box-shadow .15s;
 }
 input:focus, select:focus, textarea:focus {
-  border-color: var(--color-mint);
-  box-shadow: 0 0 0 3px rgba(127,216,164,0.12);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(91,61,245,0.2);
 }
-::placeholder { color: var(--color-cream-faint); }
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] {
+  border-color: var(--color-negative);
+}
+::placeholder { color: var(--color-text-faint); }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
@@ -70,11 +84,36 @@ input:focus, select:focus, textarea:focus {
   cursor: pointer;
 }
 .btn:active { transform: scale(.97); }
-.btn-primary { background: var(--color-mint); color: var(--color-ink-950); }
-.btn-primary:hover { filter: brightness(1.08); }
-.btn-ghost { background: transparent; border: 1px solid rgba(242,236,221,0.15); color: var(--color-cream); }
-.btn-ghost:hover { background: rgba(242,236,221,0.06); }
+.btn-primary { background: var(--color-brand); color: #fff; }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-ghost { background: transparent; border: 1px solid var(--color-line); color: var(--color-text); }
+.btn-ghost:hover { background: rgba(23,32,27,0.05); }
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
 
 ::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-thumb { background: var(--color-ink-600); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--color-surface-sunk) 25%, #f6f2e8 50%, var(--color-surface-sunk) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
