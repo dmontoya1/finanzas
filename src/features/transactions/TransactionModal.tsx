@@ -2,8 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { useApp } from '../../context/useApp'
-import { supabase } from '../../lib/supabase'
 import { getEurCopRate } from '../../lib/fx'
+import { saveTransaction, parseAmountInput } from './saveTransaction'
 import type { Currency, Transaction, TxType } from '../../types'
 
 interface Props {
@@ -35,22 +35,20 @@ export default function TransactionModal({ transaction, onClose, onSaved }: Prop
     e.preventDefault()
     if (!household || !session) return
     setBusy(true); setError(null)
-    const payload = {
-      household_id: household.id,
-      user_id: session.user.id,
+    const parsed = parseAmountInput(amount)
+    if (parsed === null) { setError('Monto inválido'); setBusy(false); return }
+    const { error } = await saveTransaction({
+      householdId: household.id,
+      userId: session.user.id,
       type,
-      status: 'confirmed' as const,
-      amount: parseFloat(amount),
+      amount: parsed,
       currency,
-      fx_rate: rate ?? (await getEurCopRate()),
-      category_id: categoryId || null,
+      fxRate: rate,
+      categoryId: categoryId || null,
       description: description || null,
-      occurred_at: date,
-    }
-    const { error } = transaction
-      ? await supabase.from('transactions').update(payload).eq('id', transaction.id)
-      : await supabase.from('transactions').insert(payload)
-    if (error) { setError(error.message); setBusy(false) }
+      date,
+    }, transaction?.id)
+    if (error) { setError(error); setBusy(false) }
     else onSaved()
   }
 
