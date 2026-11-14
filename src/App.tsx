@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { useApp } from './context/useApp'
 import AuthPage from './features/auth/AuthPage'
@@ -38,34 +39,13 @@ function Splash() {
   )
 }
 
-export default function App() {
+function Screen() {
   const { session, loading, householdLoading, household } = useApp()
 
-  if (loading) {
-    return (
-      <>
-        <div role="status" aria-label="Cargando" className="grid min-h-dvh place-items-center">
-          <div className="flex flex-col items-center gap-4">
-            <span className="hero-gradient grid size-14 animate-pulse place-items-center rounded-2xl text-2xl font-bold text-white display">C</span>
-            <p className="display text-2xl font-bold tracking-tight text-text">Cuentas</p>
-          </div>
-        </div>
-        <Analytics />
-      </>
-    )
-  }
-  if (!session) return (
-    <>
-      <AuthPage />
-      <Analytics />
-    </>
-  )
-  if (!household) return (
-    <>
-      <Onboarding />
-      <Analytics />
-    </>
-  )
+  if (loading) return <Splash />
+  if (!session) return <AuthPage />
+  if (householdLoading && !household) return <Splash />
+  if (!household) return <Onboarding />
 
   return (
     <Layout>
@@ -80,5 +60,14 @@ export default function App() {
       </Suspense>
       <SpeedInsights />
     </Layout>
+  )
+}
+
+export default function App() {
+  return (
+    <>
+      <Screen />
+      <Analytics />
+    </>
   )
 }
