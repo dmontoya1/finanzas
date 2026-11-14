@@ -7,9 +7,10 @@ export function suggestPattern(merchant: string | null | undefined): string | nu
   if (hash >= 0) s = s.slice(0, hash)
   const star = s.indexOf('*')
   if (star >= 0) {
-    const before = s.slice(0, star)
+    const before = s.slice(0, star).trim()
     const after = trimPunct(s.slice(star + 1))
-    s = after.length >= 3 && !/\d/.test(after) ? after : before
+    // Keep the prefix with a stable suffix ("PAYPAL *SPOTIFY") so the rule stays specific; a bare "TRIP" would match unrelated merchants.
+    s = after.length >= 3 && !/\d/.test(after) ? `${before} *${after}` : before
   }
   const tokens = s.trim().split(' ')
   while (tokens.length > 1 && /\d/.test(tokens[tokens.length - 1])) tokens.pop()

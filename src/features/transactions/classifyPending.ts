@@ -46,7 +46,7 @@ export async function classifyPending(p: {
         .map((t) => t.id)
       if (ids.length) {
         const { error: alsoErr } = await supabase.from('transactions')
-          .update({ category_id: categoryId, status: 'confirmed' }).in('id', ids)
+          .update({ category_id: categoryId, status: 'confirmed' }).in('id', ids).eq('status', 'pending_review')
         if (alsoErr) result.warning = `No se pudieron clasificar los demás: ${alsoErr.message}`
         else result.alsoIds = ids
       }
