@@ -67,6 +67,7 @@ export default function BudgetSection({ categories, monthTxs }: {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.min(pct, 100)}
+                aria-valuetext={`${status.label} · ${pct}%`}
                 className="h-2 overflow-hidden rounded-full bg-surface-sunk"
               >
                 <motion.div

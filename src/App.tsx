@@ -27,21 +27,45 @@ function RouteFallback() {
   )
 }
 
+function Splash() {
+  return (
+    <div role="status" aria-label="Cargando" className="grid min-h-dvh place-items-center">
+      <div className="flex flex-col items-center gap-4">
+        <span className="hero-gradient grid size-14 animate-pulse place-items-center rounded-2xl text-2xl font-bold text-white display">C</span>
+        <p className="display text-2xl font-bold tracking-tight text-text">Cuentas</p>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
-  const { session, loading, household } = useApp()
+  const { session, loading, householdLoading, household } = useApp()
 
   if (loading) {
     return (
-      <div role="status" aria-label="Cargando" className="grid min-h-dvh place-items-center">
-        <div className="flex flex-col items-center gap-4">
-          <span className="hero-gradient grid size-14 animate-pulse place-items-center rounded-2xl text-2xl font-bold text-white display">C</span>
-          <p className="display text-2xl font-bold tracking-tight text-text">Cuentas</p>
+      <>
+        <div role="status" aria-label="Cargando" className="grid min-h-dvh place-items-center">
+          <div className="flex flex-col items-center gap-4">
+            <span className="hero-gradient grid size-14 animate-pulse place-items-center rounded-2xl text-2xl font-bold text-white display">C</span>
+            <p className="display text-2xl font-bold tracking-tight text-text">Cuentas</p>
+          </div>
         </div>
-      </div>
+        <Analytics />
+      </>
     )
   }
-  if (!session) return <AuthPage />
-  if (!household) return <Onboarding />
+  if (!session) return (
+    <>
+      <AuthPage />
+      <Analytics />
+    </>
+  )
+  if (!household) return (
+    <>
+      <Onboarding />
+      <Analytics />
+    </>
+  )
 
   return (
     <Layout>

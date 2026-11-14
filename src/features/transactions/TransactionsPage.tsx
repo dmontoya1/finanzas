@@ -120,13 +120,15 @@ export default function TransactionsPage() {
                 initial={reduce ? false : { opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, height: 0 }}
-                className="flex items-center gap-3 px-4 py-2 sm:px-5"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 sm:flex-nowrap sm:px-5"
               >
+                {/* Narrow screens: icon + text take the full first line; amount and actions wrap below */}
+                <div className="flex min-w-0 basis-full items-center gap-3 sm:basis-0 sm:flex-1">
                 <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface-sunk text-lg">
                   {cat?.emoji ?? '❓'}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">
+                  <p className="line-clamp-2 break-words font-medium">
                     {label}
                     {t.source === 'apple_pay' && <span className="ml-2 rounded-full bg-warning-fill/20 px-2 py-0.5 text-[10px] font-semibold text-warning">PAY</span>}
                   </p>
@@ -135,7 +137,8 @@ export default function TransactionsPage() {
                     <span className="truncate">{cat?.name ?? 'Sin categoría'} · {t.occurred_at}</span>
                   </p>
                 </div>
-                <div className="text-right">
+                </div>
+                <div className="flex-1 pl-[3.25rem] sm:flex-none sm:pl-0 sm:text-right">
                   <p className={`num font-semibold ${t.type === 'income' ? 'text-positive' : 'text-negative'}`}>
                     {sign}{formatMoney(t.amount, t.currency)}
                   </p>
