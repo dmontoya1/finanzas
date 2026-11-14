@@ -63,7 +63,13 @@ Each task closes with one work-unit commit on this branch. Authored-line heurist
 - Unverified in a browser (S4): login/signup/confirmation and create/join household flows, password-manager autofill, 375px layout without zoom or horizontal scroll, lazy-route skeleton flash, branded loading screen, budget bars at 79/80/100/101%, `PendingTile` and currency pill look after alias migration, iOS `theme-color`, font rendering with the preload, reduced motion.
 
 ## Status
-7/7 tasks done and committed across 4 slice branches. All 7 tasks verified by lint/build only; no browser verification has happened for any slice.
+Done. 7/7 tasks delivered and merged to `master` (merge commit 98a5d9a, 2026-11-14). The user ran the app in a browser on the tracker branch and confirmed it works; the writers and the parent only ran lint/build, and headless screenshots were inconclusive (framer-motion entrance mid-animation), so the browser check is the user's.
+
+## Delivery record
+- Tracker PR #1 (`feat/ui-redesign` -> `master`), merged last.
+- Children: #2 S1 foundation, #3 S2 shell, #4 S2b dashboard, #5 S3a transactions (T4), #6 S3b categories/settings (T5), #7 S4 auth/polish (T6, T7). `size:exception` on #2, #3, #4, #6 (639, 411, 439, 429 lines); #5 (318) and #7 (313 without lockfile) within budget. S3 was split in two at the user's choice.
+- #3 to #7 were merged into their parent slice branches, not into the tracker, so S2 to S4 never reached it. Fixed with integration PR #8 (`feat/ui-redesign-s4-auth-polish` -> `feat/ui-redesign`, `size:exception`, 1,874 lines without lockfile, already reviewed in parts).
+- Lesson: with a Feature Branch Chain, retarget each child to the tracker, or delete its head branch on merge, before merging the next one. GitHub only retargets a child when the parent's head branch is deleted. Verify with `git merge-base --is-ancestor <slice> <tracker>` before closing the chain.
 
 ## Next step
-User checks S1-S4 in the browser (:5173). Then push and open the chained PRs into `feat/ui-redesign` (S1 -> S2 shell -> S2b dashboard -> S3 -> S4), and merge `feat/ui-redesign` to `master`. Push, PRs and merges stay the user's decision.
+None for this feature. Optional cleanup: delete the merged `feat/ui-redesign*` branches, local and remote.
