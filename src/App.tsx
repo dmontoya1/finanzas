@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { useApp } from './context/useApp'
 import AuthPage from './features/auth/AuthPage'
 import Onboarding from './features/onboarding/Onboarding'
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+      <SpeedInsights />
     </Layout>
   )
 }
