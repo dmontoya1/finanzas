@@ -1,21 +1,9 @@
-import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { generateDueRecurring } from '../lib/recurring'
 import type { Category, Currency, Household } from '../types'
-
-interface AppState {
-  session: Session | null
-  loading: boolean
-  household: Household | null
-  categories: Category[]
-  viewCurrency: Currency
-  setViewCurrency: (c: Currency) => void
-  refreshHousehold: () => Promise<void>
-  refreshCategories: () => Promise<void>
-}
-
-const Ctx = createContext<AppState | null>(null)
+import { Ctx } from './useApp'
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -31,37 +19,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setViewCurrencyState(c)
   }
 
-  const refreshHousehold = useCallback(async () => {
+  // Lecturas puras (sin setState) para poder usarlas dentro de efectos
+  const fetchHousehold = useCallback(async () => {
     const { data } = await supabase
       .from('household_members')
       .select('households(*)')
       .limit(1)
       .maybeSingle()
-    setHousehold((data?.households as unknown as Household) ?? null)
+    return (data?.households as unknown as Household) ?? null
   }, [])
 
-  const refreshCategories = useCallback(async () => {
+  const fetchCategories = useCallback(async (): Promise<Category[]> => {
     const { data } = await supabase.from('categories').select('*').order('name')
-    setCategories(data ?? [])
+    return data ?? []
   }, [])
+
+  const refreshHousehold = useCallback(async () => setHousehold(await fetchHousehold()), [fetchHousehold])
+  const refreshCategories = useCallback(async () => setCategories(await fetchCategories()), [fetchCategories])
 
   useEffect(() => {
+    // El estado derivado de la sesión se limpia en el callback, no en un efecto
+    const apply = (s: Session | null) => {
+      setSession(s)
+      if (!s) {
+        setHousehold(null)
+        setCategories([])
+      }
+    }
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
+      apply(data.session)
       setLoading(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => apply(s))
     return () => sub.subscription.unsubscribe()
   }, [])
 
   useEffect(() => {
-    if (!session) {
-      setHousehold(null)
-      setCategories([])
-      return
-    }
-    refreshHousehold().then(refreshCategories)
-  }, [session, refreshHousehold, refreshCategories])
+    if (!session) return
+    fetchHousehold().then((h) => {
+      setHousehold(h)
+      return fetchCategories().then(setCategories)
+    })
+  }, [session, fetchHousehold, fetchCategories])
 
   // Recurrentes: una sola generación por sesión, sin bloquear el render
   const recurringDone = useRef(false)
@@ -76,10 +75,4 @@ export function AppProvider({ children }: { children: ReactNode }) {
       {children}
     </Ctx.Provider>
   )
-}
-
-export function useApp(): AppState {
-  const ctx = useContext(Ctx)
-  if (!ctx) throw new Error('useApp debe usarse dentro de <AppProvider>')
-  return ctx
 }

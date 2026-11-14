@@ -14,10 +14,10 @@
     "@tailwindcss/vite": "^4.3.0",
     "date-fns": "^4.4.0",
     "framer-motion": "^12.40.0",
+    "lucide-react": "^1.72.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.17.0",
-    "recharts": "^3.8.1",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
