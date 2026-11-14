@@ -63,7 +63,20 @@ Each task closes with one work-unit commit on this branch. Authored-line heurist
 - Unverified in a browser (S4): login/signup/confirmation and create/join household flows, password-manager autofill, 375px layout without zoom or horizontal scroll, lazy-route skeleton flash, branded loading screen, budget bars at 79/80/100/101%, `PendingTile` and currency pill look after alias migration, iOS `theme-color`, font rendering with the preload, reduced motion.
 
 ## Status
-7/7 tasks done and committed across 4 slice branches. All 7 tasks verified by lint/build only; no browser verification has happened for any slice.
+Done. 7/7 tasks delivered and merged to `master` (merge commit 98a5d9a, 2026-11-14). During implementation the writers and the parent only ran lint/build. After the merge the user ran the app in their browser and reported it works (without listing which checks they covered), and an automated browser pass added the evidence below. The "Unverified in a browser" bullets above are the pre-merge state; this section supersedes them.
+
+## Verification after merge
+- **Automated (2026-11-14):** Playwright 1.65.1 + Chromium headless, installed outside the repo, with Supabase fully mocked (a catch-all aborted any request to the real backend; zero reached it) at 390x844 and 1280x800. About 150 checks.
+- **Covered and passing:** auth screen layout (no horizontal overflow, 16px labeled inputs, 44px buttons, no console errors); Hero modes remaining/over/closed/balance and over-budget gradient contrast (>= 4.5:1); budget bar thresholds at 79/80/100/101%; tab bar vs sidebar and active route; FAB, `n` shortcut guards and QuickAdd amount parsing ("12,5" -> 12.5, "1.234,50" -> 1234.5); undo-toast flows on transactions and categories (undo sends no DELETE, expiry sends one, navigate-away flushes, forced 500 restores the row); category budget save/duplicate/invalid; settings secret mask, CopyField success and clipboard-failure path, recurring-delete modal focus trap; splash and lazy-route fallback.
+- **Found and fixed (PR #11):** onboarding flashed for returning users while the household loaded (pre-existing); mobile transaction rows truncated; negative "Libre de verdad" used an ASCII hyphen; focus lost after closing QuickAdd; progressbar `aria-valuenow` capped at 100 without `aria-valuetext`; currency toggle and two TransactionModal selects under 44px; undo toast overlapped the FAB on mobile.
+- **Not proven by the mock:** RLS and `is_member`, real realtime delivery (including a quick-added row appearing without reload), real FX, real auth and token refresh, Edge Function, real device keyboards and safe-area insets.
+- **Still unverified:** signup and email confirmation, create/join household with a real backend, password-manager autofill, iOS `theme-color`, font rendering with the preload, `fx_rate` preserved when editing a transaction, empty-month message, pending-tile confirm. Safari does not focus buttons on click, so the modal focus restore may fall back to `<body>` there.
+
+## Delivery record
+- Tracker PR #1 (`feat/ui-redesign` -> `master`), merged last.
+- Children: #2 S1 foundation, #3 S2 shell, #4 S2b dashboard, #5 S3a transactions (T4), #6 S3b categories/settings (T5), #7 S4 auth/polish (T6, T7). `size:exception` on #2, #3, #4, #6 (639, 411, 439, 429 lines); #5 (318) and #7 (313 without lockfile) within budget. S3 was split in two at the user's choice.
+- #3 to #7 were merged into their parent slice branches, not into the tracker, so S2 to S4 never reached it. Fixed with integration PR #8 (`feat/ui-redesign-s4-auth-polish` -> `feat/ui-redesign`, `size:exception`, 1,874 lines without lockfile, already reviewed in parts).
+- Lesson: with a Feature Branch Chain, retarget each child to the tracker, or delete its head branch on merge, before merging the next one. GitHub only retargets a child when the parent's head branch is deleted. Verify with `git merge-base --is-ancestor <slice> <tracker>` before closing the chain.
 
 ## Next step
-User checks S1-S4 in the browser (:5173). Then push and open the chained PRs into `feat/ui-redesign` (S1 -> S2 shell -> S2b dashboard -> S3 -> S4), and merge `feat/ui-redesign` to `master`. Push, PRs and merges stay the user's decision.
+None for this feature. Optional cleanup: delete the merged `feat/ui-redesign*` branches, local and remote.
