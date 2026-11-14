@@ -28,7 +28,7 @@ The user and their wife track expenses in an Excel sheet today and forget to upd
 Each task closes with one work-unit commit. Authored-line heuristic ~400 per PR (advisory).
 
 PR 1 `feat/captura-s1-reglas-aprendidas`
-- [ ] C1 Learn rules from classification: confirming a pending item offers "Recordar este comercio" (on by default, editable pattern); normalizes the merchant into a pattern (uppercase, trimmed, cut at `*`, `#` and trailing codes, min 3 chars), skips duplicates (check-then-insert, no migration), and retroactively classifies other pending items that contain the pattern. Shared confirm component used by the dashboard tile.
+- [x] C1 (commits 4b689ef, 1579389; route: delegated writer + 2 inline fixes by the parent) Learn rules from classification: confirming a pending item offers "Recordar este comercio" (on by default, editable pattern); normalizes the merchant into a pattern (uppercase, trimmed, cut at `*`, `#` and trailing codes, min 3 chars), skips duplicates (check-then-insert, no migration), and retroactively classifies other pending items that contain the pattern. Shared confirm component used by the dashboard tile.
 
 PR 2 `feat/captura-s2-pendientes-y-recientes`
 - [ ] C2 Pending inbox: "Por clasificar (N)" section at the top of `/movimientos` across all months (not only the month in view), badge with the count on the Movimientos tab and sidebar item, reusing C1's confirm component; realtime like `useTransactions`.
@@ -45,10 +45,16 @@ PR 4 `feat/captura-s4-webhook-confiable`
 - Strategy: `ask-on-risk`. Forecast ~900 authored lines across 4 PRs, each planned under ~400; no chain strategy needed because each PR starts from `master` after the previous one is merged. Push, PR creation and merge stay the user's decision.
 
 ## Progress
-- Branch `feat/captura-s1-reglas-aprendidas` created from `master` (909eb26). Tasks: 0/6 done.
+- Branch `feat/captura-s1-reglas-aprendidas` created from `master` (909eb26). Tasks: 1/6 done.
+- C1 delivered: pure helpers in `src/lib/merchantRules.ts`, `classifyPending` in `src/features/transactions/`, pending tile with category chips + "Otra…" select, undo toast hosted in `Dashboard`. UX: one tap classifies, learns the rule and reclassifies other matching pending items; "Deshacer" reverts all of it.
+- Parent review of the writer's code found and fixed two issues in commit 1579389: (1) a `*` merchant like "UBER *TRIP" produced the bare pattern "TRIP", which would silently match unrelated merchants in the webhook's "contains" matching; the pattern now keeps the prefix ("UBER *TRIP"); (2) the retroactive bulk update now only touches rows still in `pending_review`, so a partner's concurrent classification is not overwritten.
+- Known limits: the pending tile only shows the month in view (C2 fixes it); the Settings rules list refreshes on page open, not live; a rule created from a merchant with several internal spaces is normalized to single spaces while the webhook compares the raw text, so such a rule may never match; the "Otra…" select path is covered by a screenshot, not by an assertion.
+- Native review: `gentle-ai review assess` on 909eb26..1579389 gave medium, 253 lines, `review_due: false` (`under_budget`); pending in the slice until it reaches the budget.
 
 ## Verification evidence
 - Base: `master` 909eb26, lint and build green, Vercel status success.
+- C1 (parent re-run): `npm run lint` exit 0; `npm run build` exit 0 (663.28 kB); 12 scratch asserts of `suggestPattern`/`matchesPattern`/`hasRuleFor` pass; Playwright + mocked Supabase `verify-c1.mjs` 21 PASS, 0 FAIL (PATCH/POST payloads, existing-rule no-POST, no pattern for "AB", undo reverts PATCH + DELETE, forced 500 shows an error toast and creates no rule, 44px targets, no overflow at 390 and 1280). Zero requests to the real backend.
+- Not proven by the mock: RLS, realtime, real Apple Pay merchant strings.
 
 ## Next step
-C1 via a delegated writer, then `gentle-ai review assess` on the commit.
+C2 and C3 go in PR 2 after PR 1 is merged. For PR 1, the user decides push and merge.
