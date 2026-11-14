@@ -92,25 +92,53 @@ export function UpcomingTile({ items, view }: { items: UpcomingPayment[]; view: 
   )
 }
 
-export function PendingTile({ items, categories, onConfirm }: { items: Transaction[]; categories: Category[]; onConfirm: (t: Transaction, categoryId: string) => void }) {
+const MAX_CHIPS = 4
+
+export function PendingTile({ items, categories, monthTxs, onClassify, busy = false }: {
+  items: Transaction[]; categories: Category[]; monthTxs: Transaction[]; busy?: boolean
+  onClassify: (t: Transaction, category: Category) => void
+}) {
   const a = useTile(4)
   if (items.length === 0) return null
+  const expenseCats = categories.filter((c) => c.kind === 'expense')
+  // Chips: most used categories among confirmed expenses first, alphabetical as tiebreak.
+  const uses = new Map<string, number>()
+  for (const t of monthTxs) {
+    if (t.type === 'expense' && t.status === 'confirmed' && t.category_id) uses.set(t.category_id, (uses.get(t.category_id) ?? 0) + 1)
+  }
+  const ranked = [...expenseCats].sort((x, y) => (uses.get(y.id) ?? 0) - (uses.get(x.id) ?? 0) || x.name.localeCompare(y.name, 'es'))
+  const chips = ranked.slice(0, MAX_CHIPS)
+  const rest = ranked.slice(MAX_CHIPS)
   return (
     <Card {...a} className="col-span-2 lg:col-span-4">
       <h3 className="mb-3 font-semibold">⏳ {items.length} pago(s) de Apple Pay por clasificar</h3>
       <ul className="space-y-2">
         {items.map((t) => (
-          <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-4 py-2.5">
-            <div>
-              <p className="font-medium">{t.merchant || 'Comercio desconocido'}</p>
-              <p className="num text-sm text-text-soft">−{formatMoney(t.amount, t.currency)} · {t.occurred_at}</p>
-            </div>
-            <select defaultValue="" onChange={(e) => e.target.value && onConfirm(t, e.target.value)} className="min-h-11 w-auto text-sm">
-              <option value="" disabled>Categoría…</option>
-              {categories.filter((c) => c.kind === 'expense').map((c) => (
-                <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
+          <li key={t.id} className="rounded-xl bg-surface px-4 py-2.5">
+            <p className="font-medium">{t.merchant || 'Comercio desconocido'}</p>
+            <p className="num text-sm text-text-soft">−{formatMoney(t.amount, t.currency)} · {t.occurred_at}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {chips.map((c) => (
+                <button
+                  key={c.id} type="button" onClick={() => onClassify(t, c)} disabled={busy} aria-disabled={busy}
+                  aria-label={`Clasificar ${t.merchant || 'comercio'} como ${c.name}`}
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-3 text-sm hover:bg-text/5 disabled:cursor-wait disabled:opacity-50"
+                >
+                  <span className="size-2.5 shrink-0 rounded-full" style={{ background: categoryColor(c.id) }} aria-hidden />
+                  {c.emoji} {c.name}
+                </button>
               ))}
-            </select>
+              {rest.length > 0 && (
+                <select
+                  key={`${t.id}-${rest.length}`} defaultValue="" aria-label={`Otra categoría para ${t.merchant || 'comercio'}`} disabled={busy}
+                  onChange={(e) => { const c = rest.find((x) => x.id === e.target.value); if (c) onClassify(t, c) }}
+                  className="min-h-11 w-auto text-sm disabled:cursor-wait disabled:opacity-50"
+                >
+                  <option value="" disabled>Otra…</option>
+                  {rest.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+                </select>
+              )}
+            </div>
           </li>
         ))}
       </ul>

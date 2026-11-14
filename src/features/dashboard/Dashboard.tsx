@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { endOfMonth, format, getDaysInMonth, startOfMonth, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -12,7 +12,11 @@ import { useRecurringRules } from './useRecurringRules'
 import { IncomeExpenseTiles, TopSpending, UpcomingTile, PendingTile, RecentTransactions } from './BentoTiles'
 import BudgetSection from './BudgetSection'
 import { supabase } from '../../lib/supabase'
-import type { Transaction } from '../../types'
+import { Toast, type ToastData } from '../../components/ui'
+import { classifyPending, type ClassifyResult } from '../transactions/classifyPending'
+import type { Category, Transaction } from '../../types'
+
+const TOAST_MS = 8000
 
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -56,11 +60,59 @@ export default function Dashboard() {
     dayOfMonth: today.getDate(), daysInMonth: getDaysInMonth(today),
   })
 
-  async function confirmTx(t: Transaction, categoryId: string) {
-    await supabase.from('transactions')
-      .update({ category_id: categoryId, status: 'confirmed' })
-      .eq('id', t.id)
-    refresh()
+  // Merchant rules: loaded once, refetched after a rule is created or undone.
+  const [merchantRules, setMerchantRules] = useState<{ id: string; pattern: string }[]>([])
+  const loadMerchantRules = useCallback(
+    () => supabase.from('merchant_rules').select('id, pattern').then(({ data }) => setMerchantRules(data ?? [])),
+    [],
+  )
+  useEffect(() => { void loadMerchantRules() }, [loadMerchantRules, household?.id])
+
+  const [toast, setToast] = useState<ToastData | null>(null)
+  const toastTimer = useRef<number | undefined>(undefined)
+  const showToast = useCallback((t: ToastData | null) => {
+    window.clearTimeout(toastTimer.current)
+    setToast(t)
+    if (t) toastTimer.current = window.setTimeout(() => setToast(null), TOAST_MS)
+  }, [])
+  useEffect(() => () => window.clearTimeout(toastTimer.current), [])
+
+  async function undoClassify(r: ClassifyResult) {
+    const err = await r.undo()
+    showToast(err ? { message: `No se pudo deshacer: ${err}`, tone: 'error', onClose: () => showToast(null) } : null)
+    await Promise.all([refresh(), loadMerchantRules()])
+  }
+
+  // Re-entrancy guard: the ref blocks same-tick double taps, the state disables the UI.
+  const classifying = useRef(false)
+  const [classifyBusy, setClassifyBusy] = useState(false)
+
+  async function classifyTx(t: Transaction, cat: Category) {
+    if (classifying.current) return
+    classifying.current = true
+    setClassifyBusy(true)
+    try {
+      await doClassify(t, cat)
+    } finally {
+      classifying.current = false
+      setClassifyBusy(false)
+    }
+  }
+
+  async function doClassify(t: Transaction, cat: Category) {
+    const r = await classifyPending({ householdId: household!.id, tx: t, categoryId: cat.id, rules: merchantRules, pendingTxs: pending })
+    if (r.error) {
+      showToast({ message: `No se pudo clasificar: ${r.error}`, tone: 'error', onClose: () => showToast(null) })
+      return
+    }
+    await Promise.all([refresh(), loadMerchantRules()])
+    const name = t.merchant || 'Comercio'
+    if (r.warning) {
+      showToast({ message: `${name} → ${cat.name}. ${r.warning}`, tone: 'error', onClose: () => showToast(null) })
+      return
+    }
+    const learned = r.pattern ? `. Recordaré «${r.pattern}»${r.alsoIds.length ? ` y clasifiqué ${r.alsoIds.length} más` : ''}` : ''
+    showToast({ message: `${name} → ${cat.name}${learned}`, actionLabel: 'Deshacer', onAction: () => void undoClassify(r) })
   }
 
   return (
@@ -83,7 +135,7 @@ export default function Dashboard() {
         <IncomeExpenseTiles income={income} expense={expense} view={viewCurrency} />
         <TopSpending transactions={monthTxs} categories={categories} view={viewCurrency} />
         <UpcomingTile items={upcoming} view={viewCurrency} />
-        <PendingTile items={pending} categories={categories} onConfirm={confirmTx} />
+        <PendingTile items={pending} categories={categories} monthTxs={monthTxs} onClassify={classifyTx} busy={classifyBusy} />
         <RecentTransactions transactions={monthTxs} categories={categories} view={viewCurrency} />
       </div>
 
@@ -91,6 +143,7 @@ export default function Dashboard() {
       <motion.div custom={2.5} variants={cardVariants} initial="hidden" animate="show">
         <BudgetSection categories={categories} monthTxs={monthTxs} />
       </motion.div>
+      <Toast toast={toast} />
     </div>
   )
 }
