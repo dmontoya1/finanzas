@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { endOfMonth, format, getDaysInMonth, startOfMonth, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useApp } from '../../context/useApp'
 import { useTransactions } from '../transactions/useTransactions'
 import MonthPicker from '../../components/MonthPicker'
-import { convert, formatMoney, projectMonth, sumIn } from '../../lib/money'
+import { convert, formatMoney, heroSummary, projectMonth, sumIn, upcomingRecurring } from '../../lib/money'
+import { getEurCopRate } from '../../lib/fx'
+import Hero from './Hero'
+import { useRecurringRules } from './useRecurringRules'
 import BudgetSection from './BudgetSection'
 import { supabase } from '../../lib/supabase'
 import type { Transaction } from '../../types'
@@ -19,10 +22,10 @@ const cardVariants = {
 }
 
 export default function Dashboard() {
-  const { viewCurrency, categories } = useApp()
+  const { viewCurrency, categories, household } = useApp()
   const [month, setMonth] = useState(() => startOfMonth(new Date()))
 
-  // Traemos 6 meses para la tendencia; el mes activo se filtra en memoria
+  // Traemos 6 meses; el mes activo se filtra en memoria
   const from = format(startOfMonth(subMonths(month, 5)), 'yyyy-MM-dd')
   const to = format(endOfMonth(month), 'yyyy-MM-dd')
   const { transactions, loading, refresh } = useTransactions(from, to)
@@ -44,6 +47,23 @@ export default function Dashboard() {
     ? projectMonth(monthTxs, viewCurrency, today.getDate(), getDaysInMonth(today))
     : null
 
+  const [rate, setRate] = useState<number | null>(null)
+  useEffect(() => { getEurCopRate().then(setRate) }, [])
+  const { rules, loading: rulesLoading } = useRecurringRules(household!.id)
+  const isCurrentMonth = monthKey === format(today, 'yyyy-MM')
+  const generatedRuleIds = useMemo(
+    () => new Set(monthTxs.filter((t) => t.recurring_month === monthKey && t.recurring_rule_id).map((t) => t.recurring_rule_id!)),
+    [monthTxs, monthKey],
+  )
+  const upcoming = useMemo(
+    () => (isCurrentMonth && rate != null ? upcomingRecurring({ rules, generatedRuleIds, today: new Date(), view: viewCurrency, rate }) : []),
+    [isCurrentMonth, rate, rules, generatedRuleIds, viewCurrency],
+  )
+  const summary = rate == null ? null : heroSummary({
+    categories, monthTxs, view: viewCurrency, rate, isCurrentMonth,
+    dayOfMonth: today.getDate(), daysInMonth: getDaysInMonth(today),
+  })
+
   const byCategory = useMemo(() => {
     const map = new Map<string, number>()
     for (const t of monthTxs.filter((x) => x.type === 'expense')) {
@@ -55,19 +75,6 @@ export default function Dashboard() {
       .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
       .sort((a, b) => b.value - a.value)
   }, [monthTxs, categories, viewCurrency])
-
-  const trend = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => {
-      const m = subMonths(month, 5 - i)
-      const key = format(m, 'yyyy-MM')
-      const txs = transactions.filter((t) => t.occurred_at.startsWith(key))
-      return {
-        mes: format(m, 'MMM', { locale: es }),
-        Ingresos: Math.round(sumIn(txs.filter((t) => t.type === 'income'), viewCurrency)),
-        Gastos: Math.round(sumIn(txs.filter((t) => t.type === 'expense'), viewCurrency)),
-      }
-    })
-  }, [transactions, month, viewCurrency])
 
   async function confirmTx(t: Transaction, categoryId: string) {
     await supabase.from('transactions')
@@ -82,6 +89,15 @@ export default function Dashboard() {
         <h2 className="display text-2xl font-semibold">Resumen</h2>
         <MonthPicker month={month} onChange={(d) => setMonth(startOfMonth(d))} />
       </div>
+
+      {summary && (
+        <Hero
+          summary={summary} view={viewCurrency} monthLabel={format(month, 'MMMM', { locale: es })}
+          upcomingTotal={upcoming.length ? upcoming.reduce((s, u) => s + u.amountInView, 0) : null}
+          loading={loading || rulesLoading}
+        />
+      )}
+      {!summary && <Hero summary={{ mode: 'balance', amount: 0, limit: 0, spent: 0, usedRatio: 0, perDay: null, projectedSpent: null, unbudgetedSpent: 0 }} view={viewCurrency} monthLabel="" upcomingTotal={null} loading />}
 
       {/* Pendientes de Apple Pay */}
       {pending.length > 0 && (
@@ -168,35 +184,6 @@ export default function Dashboard() {
               </ul>
             </div>
           )}
-        </motion.div>
-
-        {/* Tendencia 6 meses */}
-        <motion.div custom={4} variants={cardVariants} initial="hidden" animate="show" className="card p-5">
-          <h3 className="mb-4 font-semibold">Últimos 6 meses</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={trend}>
-              <defs>
-                <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#7fd8a4" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="#7fd8a4" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ff8d6b" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="#ff8d6b" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="rgba(242,236,221,.07)" vertical={false} />
-              <XAxis dataKey="mes" stroke="#7d796c" tickLine={false} axisLine={false} />
-              <YAxis stroke="#7d796c" tickLine={false} axisLine={false} width={70}
-                tickFormatter={(v: number) => Intl.NumberFormat('es', { notation: 'compact' }).format(v)} />
-              <Tooltip
-                formatter={(v) => formatMoney(Number(v), viewCurrency)}
-                contentStyle={{ background: '#101713', border: '1px solid rgba(242,236,221,.15)', borderRadius: 12 }}
-              />
-              <Area type="monotone" dataKey="Ingresos" stroke="#7fd8a4" fill="url(#gIn)" strokeWidth={2.5} />
-              <Area type="monotone" dataKey="Gastos" stroke="#ff8d6b" fill="url(#gOut)" strokeWidth={2.5} />
-            </AreaChart>
-          </ResponsiveContainer>
         </motion.div>
       </div>
     </div>
