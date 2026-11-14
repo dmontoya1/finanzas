@@ -24,8 +24,8 @@ export default function BudgetSection({ categories, monthTxs }: {
     return (
       <div className="card p-5">
         <h3 className="mb-1 font-semibold">Presupuestos</h3>
-        <p className="text-sm text-cream-faint">
-          Define topes mensuales en <Link to="/categorias" className="underline hover:text-cream">Categorías</Link>.
+        <p className="text-sm text-text-faint">
+          Define topes mensuales en <Link to="/categorias" className="underline hover:text-text">Categorías</Link>.
         </p>
       </div>
     )
@@ -38,21 +38,21 @@ export default function BudgetSection({ categories, monthTxs }: {
         {rows.map(({ category, progress }) => {
           const over = progress.ratio > 1
           const warn = !over && progress.ratio >= 0.8
-          const barColor = over ? 'bg-coral' : warn ? 'bg-amber' : 'bg-mint'
+          const barColor = over ? 'bg-negative-fill' : warn ? 'bg-warning-fill' : 'bg-positive-fill'
           return (
             <li key={category.id}>
               <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
                 <span className="truncate">{category.emoji} {category.name}</span>
-                <span className="num text-cream-dim">
+                <span className="num text-text-soft">
                   {formatMoney(progress.spent, progress.currency)} / {formatMoney(progress.limit, progress.currency)}
                   {over && (
-                    <span className="ml-1 text-coral">
+                    <span className="ml-1 text-negative">
                       +{formatMoney(progress.spent - progress.limit, progress.currency)}
                     </span>
                   )}
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-ink-950/60">
+              <div className="h-2 overflow-hidden rounded-full bg-surface">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(progress.ratio, 1) * 100}%` }}

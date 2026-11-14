@@ -23,19 +23,19 @@ function isTyping(el: Element | null) {
 export function CurrencyToggle() {
   const { viewCurrency, setViewCurrency } = useApp()
   return (
-    <div className="relative flex rounded-full border border-cream/15 bg-ink-900 p-1 text-sm font-semibold">
+    <div className="relative flex rounded-full border border-line bg-surface-raised p-1 text-sm font-semibold">
       {(['EUR', 'COP'] as Currency[]).map((c) => (
         <button
           key={c}
           onClick={() => setViewCurrency(c)}
           className={`relative z-10 rounded-full px-4 py-1.5 transition-colors ${
-            viewCurrency === c ? 'text-ink-950' : 'text-cream-dim hover:text-cream'
+            viewCurrency === c ? 'text-surface' : 'text-text-soft hover:text-text'
           }`}
         >
           {viewCurrency === c && (
             <motion.span
               layoutId="currency-pill"
-              className="absolute inset-0 -z-10 rounded-full bg-amber"
+              className="absolute inset-0 -z-10 rounded-full bg-warning"
               transition={{ type: 'spring', stiffness: 500, damping: 35 }}
             />
           )}

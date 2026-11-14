@@ -18,11 +18,11 @@ export function IncomeExpenseTiles({ income, expense, view }: { income: number; 
   return (
     <>
       <Card {...a}>
-        <p className="text-sm text-cream-dim">Ingresos</p>
+        <p className="text-sm text-text-soft">Ingresos</p>
         <p className="num mt-1 text-xl font-semibold sm:text-2xl">+{formatMoney(income, view)}</p>
       </Card>
       <Card {...b}>
-        <p className="text-sm text-cream-dim">Gastos</p>
+        <p className="text-sm text-text-soft">Gastos</p>
         <p className="num mt-1 text-xl font-semibold sm:text-2xl">−{formatMoney(expense, view)}</p>
       </Card>
     </>
@@ -47,7 +47,7 @@ export function TopSpending({ transactions, categories, view }: { transactions: 
     <Card {...a} className="col-span-2 lg:row-span-2">
       <h3 className="font-semibold">Mayores gastos</h3>
       {top.length === 0 ? (
-        <p className="py-6 text-center text-cream-faint">Sin gastos este mes</p>
+        <p className="py-6 text-center text-text-faint">Sin gastos este mes</p>
       ) : (
         <>
           <div className="mt-3 flex h-3 overflow-hidden rounded-full" aria-hidden>
@@ -60,7 +60,7 @@ export function TopSpending({ transactions, categories, view }: { transactions: 
                   <span className="size-2.5 shrink-0 rounded-full" style={{ background: categoryColor(x.key) }} />
                   <span className="truncate">{x.name}</span>
                 </span>
-                <span className="num text-cream-dim">−{formatMoney(x.value, view)}</span>
+                <span className="num text-text-soft">−{formatMoney(x.value, view)}</span>
               </li>
             ))}
           </ul>
@@ -81,13 +81,13 @@ export function UpcomingTile({ items, view }: { items: UpcomingPayment[]; view: 
         {items.slice(0, 3).map((u) => (
           <li key={u.rule.id} className="flex items-center justify-between gap-2">
             <span className="min-w-0 truncate">
-              {u.rule.description} <span className="text-cream-faint">· {u.daysUntil === 0 ? 'hoy' : u.daysUntil === 1 ? 'mañana' : `en ${u.daysUntil} días`}</span>
+              {u.rule.description} <span className="text-text-faint">· {u.daysUntil === 0 ? 'hoy' : u.daysUntil === 1 ? 'mañana' : `en ${u.daysUntil} días`}</span>
             </span>
-            <span className="num text-cream-dim">−{formatMoney(u.amountInView, view)}</span>
+            <span className="num text-text-soft">−{formatMoney(u.amountInView, view)}</span>
           </li>
         ))}
       </ul>
-      <p className="num mt-3 border-t border-cream-faint/20 pt-2 text-sm font-medium">Total: −{formatMoney(total, view)}</p>
+      <p className="num mt-3 border-t border-line pt-2 text-sm font-medium">Total: −{formatMoney(total, view)}</p>
     </Card>
   )
 }
@@ -100,10 +100,10 @@ export function PendingTile({ items, categories, onConfirm }: { items: Transacti
       <h3 className="mb-3 font-semibold">⏳ {items.length} pago(s) de Apple Pay por clasificar</h3>
       <ul className="space-y-2">
         {items.map((t) => (
-          <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-ink-950/60 px-4 py-2.5">
+          <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-4 py-2.5">
             <div>
               <p className="font-medium">{t.merchant || 'Comercio desconocido'}</p>
-              <p className="num text-sm text-cream-dim">−{formatMoney(t.amount, t.currency)} · {t.occurred_at}</p>
+              <p className="num text-sm text-text-soft">−{formatMoney(t.amount, t.currency)} · {t.occurred_at}</p>
             </div>
             <select defaultValue="" onChange={(e) => e.target.value && onConfirm(t, e.target.value)} className="min-h-11 w-auto text-sm">
               <option value="" disabled>Categoría…</option>
@@ -125,7 +125,7 @@ export function RecentTransactions({ transactions, categories, view }: { transac
     <Card {...a} className="col-span-2 lg:col-span-4">
       <h3 className="font-semibold">Últimos movimientos</h3>
       {recent.length === 0 ? (
-        <p className="py-6 text-center text-cream-faint">
+        <p className="py-6 text-center text-text-faint">
           Aún no hay movimientos este mes. Pulsa «Añadir» (botón +, o la tecla N) para registrar el primero.
         </p>
       ) : (
@@ -135,7 +135,7 @@ export function RecentTransactions({ transactions, categories, view }: { transac
             return (
               <li key={t.id} className="flex items-center justify-between gap-2">
                 <span className="min-w-0 truncate">
-                  {cat?.emoji ?? '❓'} {t.merchant || t.description || cat?.name || 'Movimiento'} <span className="text-cream-faint">· {t.occurred_at}</span>
+                  {cat?.emoji ?? '❓'} {t.merchant || t.description || cat?.name || 'Movimiento'} <span className="text-text-faint">· {t.occurred_at}</span>
                 </span>
                 <span className="num">{t.type === 'income' ? '+' : '−'}{formatMoney(convert(t, view), view)}</span>
               </li>

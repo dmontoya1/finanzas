@@ -14,7 +14,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-dvh grid place-items-center">
-        <div className="display text-2xl text-cream-dim animate-pulse">Cargando…</div>
+        <div className="display text-2xl text-text-soft animate-pulse">Cargando…</div>
       </div>
     )
   }
