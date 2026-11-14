@@ -1,21 +1,24 @@
 const trimPunct = (s: string) => s.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '').trim()
 
-/** Normalizes a raw merchant into an UPPERCASE rule pattern (cut at `*`/`#`, trailing codes dropped), or null if under 3 chars. */
+/**
+ * Derives an UPPERCASE rule pattern as a raw substring of the merchant (original spacing/punctuation kept):
+ * cut at `#`/`*`, trailing codes dropped. Null if under 3 chars or if it would not match its own merchant.
+ */
 export function suggestPattern(merchant: string | null | undefined): string | null {
-  let s = (merchant ?? '').trim().toUpperCase().replace(/\s+/g, ' ')
+  const raw = (merchant ?? '').trim()
+  let s = raw
   const hash = s.indexOf('#')
   if (hash >= 0) s = s.slice(0, hash)
   const star = s.indexOf('*')
   if (star >= 0) {
-    const before = s.slice(0, star).trim()
     const after = trimPunct(s.slice(star + 1))
     // Keep the prefix with a stable suffix ("PAYPAL *SPOTIFY") so the rule stays specific; a bare "TRIP" would match unrelated merchants.
-    s = after.length >= 3 && !/\d/.test(after) ? `${before} *${after}` : before
+    if (!(after.length >= 3 && !/\d/.test(after))) s = s.slice(0, star)
   }
-  const tokens = s.trim().split(' ')
-  while (tokens.length > 1 && /\d/.test(tokens[tokens.length - 1])) tokens.pop()
-  const out = trimPunct(tokens.join(' '))
-  return out.length >= 3 ? out : null
+  while (/\s\S*\d\S*$/.test(s)) s = s.replace(/\s+\S*\d\S*$/, '')
+  const out = trimPunct(s).toUpperCase()
+  // Guard: no rule beats a rule that never matches (e.g. uppercasing that changes length).
+  return out.length >= 3 && matchesPattern(raw, out) ? out : null
 }
 
 /** Case-insensitive "contains", identical to the applepay-webhook matching. */
