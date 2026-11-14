@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import { useApp } from './context/useApp'
 import AuthPage from './features/auth/AuthPage'
 import Onboarding from './features/onboarding/Onboarding'
@@ -40,22 +41,46 @@ function Splash() {
 export default function App() {
   const { session, loading, householdLoading, household } = useApp()
 
-  if (loading) return <Splash />
-  if (!session) return <AuthPage />
-  if (householdLoading && !household) return <Splash />
-  if (!household) return <Onboarding />
+  if (loading) {
+    return (
+      <>
+        <div role="status" aria-label="Cargando" className="grid min-h-dvh place-items-center">
+          <div className="flex flex-col items-center gap-4">
+            <span className="hero-gradient grid size-14 animate-pulse place-items-center rounded-2xl text-2xl font-bold text-white display">C</span>
+            <p className="display text-2xl font-bold tracking-tight text-text">Cuentas</p>
+          </div>
+        </div>
+        <Analytics />
+      </>
+    )
+  }
+  if (!session) return (
+    <>
+      <AuthPage />
+      <Analytics />
+    </>
+  )
+  if (!household) return (
+    <>
+      <Onboarding />
+      <Analytics />
+    </>
+  )
 
   return (
-    <Layout>
-      <Suspense fallback={<RouteFallback />}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/movimientos" element={<TransactionsPage />} />
-          <Route path="/categorias" element={<CategoriesPage />} />
-          <Route path="/ajustes" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </Layout>
+    <>
+      <Layout>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/movimientos" element={<TransactionsPage />} />
+            <Route path="/categorias" element={<CategoriesPage />} />
+            <Route path="/ajustes" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </Layout>
+      <Analytics />
+    </>
   )
 }
