@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Light theme. Hex values are mirrored in src/lib/theme.ts for Recharts; keep both in sync. */
+/* Light theme. */
 @theme {
   /* Surfaces and text */
   --color-surface: #faf7f0;
@@ -18,22 +18,7 @@
   --color-negative-fill: #ff6b4a;
   --color-warning: #8a5300;
   --color-warning-fill: #f5a524;
-  --color-brand: #5b3df5;
-  --color-brand-2: #ff5d8f;
-
-  /* Legacy aliases for unmigrated screens; removed in T7 */
-  --color-ink-950: #faf7f0;
-  --color-ink-900: #ffffff;
-  --color-ink-800: #ffffff;
-  --color-ink-700: #ece7da;
-  --color-ink-600: #d6d0c0;
-  --color-cream: #17201b;
-  --color-cream-dim: #4a5550;
-  --color-cream-faint: #5f6965;
-  --color-mint: #0f7a45;
-  --color-mint-deep: #d9f2e3;
-  --color-coral: #c2361f;
-  --color-amber: #8a5300;
+  --color-brand: #0f7a55;
 
   --font-display: "Fraunces", serif;
   --font-body: "Albert Sans", sans-serif;
@@ -70,7 +55,7 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   border-color: var(--color-brand);
-  box-shadow: 0 0 0 3px rgba(91,61,245,0.2);
+  box-shadow: 0 0 0 3px rgba(15,122,85,0.25);
 }
 input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] {
   border-color: var(--color-negative);
@@ -86,6 +71,9 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .btn:active { transform: scale(.97); }
 .btn-primary { background: var(--color-brand); color: #fff; }
 .btn-primary:hover { filter: brightness(1.1); }
+.hero-gradient { background: linear-gradient(135deg, #0a6b45, #0b8574, #1a78ad); }
+/* Over-budget variant: warm red-orange, white text >= 4.5:1 at every stop */
+.hero-gradient-over { background: linear-gradient(135deg, #b3261e, #bf3a14, #a8460a); }
 .btn-ghost { background: transparent; border: 1px solid var(--color-line); color: var(--color-text); }
 .btn-ghost:hover { background: rgba(23,32,27,0.05); }
 
