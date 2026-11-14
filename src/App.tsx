@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { useApp } from './context/useApp'
 import AuthPage from './features/auth/AuthPage'
 import Onboarding from './features/onboarding/Onboarding'
@@ -68,19 +68,17 @@ export default function App() {
   )
 
   return (
-    <>
-      <Layout>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/movimientos" element={<TransactionsPage />} />
-            <Route path="/categorias" element={<CategoriesPage />} />
-            <Route path="/ajustes" element={<SettingsPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </Layout>
-      <Analytics />
-    </>
+    <Layout>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/movimientos" element={<TransactionsPage />} />
+          <Route path="/categorias" element={<CategoriesPage />} />
+          <Route path="/ajustes" element={<SettingsPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+      <SpeedInsights />
+    </Layout>
   )
 }
