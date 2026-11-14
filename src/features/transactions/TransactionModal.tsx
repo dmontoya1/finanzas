@@ -74,7 +74,7 @@ function TransactionForm({ transaction, onClose, onSaved }: Omit<Props, 'open'>)
             onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className="num text-lg" />
         </Field>
         <Field label="Moneda" className="w-32">
-          <select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>
+          <select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} className="min-h-11">
             <option value="EUR">€ EUR</option>
             <option value="COP">$ COP</option>
           </select>
@@ -91,7 +91,7 @@ function TransactionForm({ transaction, onClose, onSaved }: Omit<Props, 'open'>)
       </div>
 
       <Field label="Categoría">
-        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="min-h-11">
           <option value="">Sin categoría</option>
           {cats.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
         </select>
