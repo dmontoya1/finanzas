@@ -60,7 +60,7 @@ export default function Hero({ summary: s, view, monthLabel, upcomingTotal, load
           </p>
         )}
         {upcomingTotal != null && s.mode === 'remaining' && (
-          <p className="num text-sm opacity-90">Libre de verdad: {fmt(s.amount - upcomingTotal)} tras pagos recurrentes</p>
+          <p className="num text-sm opacity-90">Libre de verdad: {signed(s.amount - upcomingTotal)} tras pagos recurrentes</p>
         )}
         {s.unbudgetedSpent > 0 && (
           <p className="num text-sm opacity-90">{fmt(s.unbudgetedSpent)} sin presupuesto</p>

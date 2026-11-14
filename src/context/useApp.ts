@@ -5,6 +5,8 @@ import type { Category, Currency, Household } from '../types'
 export interface AppState {
   session: Session | null
   loading: boolean
+  /** True from the moment a session exists until the household fetch settles. */
+  householdLoading: boolean
   household: Household | null
   categories: Category[]
   viewCurrency: Currency

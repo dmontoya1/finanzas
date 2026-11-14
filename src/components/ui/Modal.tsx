@@ -11,11 +11,24 @@ export function Modal({ open, onClose, title, children, className = '' }: Props)
   const onCloseRef = useRef(onClose)
   const reduce = useReducedMotion()
 
+  const lastOutside = useRef<HTMLElement | null>(null)
+
   useEffect(() => { onCloseRef.current = onClose })
+
+  // Child autoFocus runs before this component's effects, so activeElement is already the new
+  // input when `open` flips. Track the last focused element outside any dialog instead.
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target
+      if (t instanceof HTMLElement && !t.closest('[role="dialog"]')) lastOutside.current = t
+    }
+    document.addEventListener('focusin', onFocusIn)
+    return () => document.removeEventListener('focusin', onFocusIn)
+  }, [])
 
   useEffect(() => {
     if (!open) return
-    const previous = document.activeElement as HTMLElement | null
+    const previous = lastOutside.current
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const el = panel.current
@@ -34,7 +47,7 @@ export function Modal({ open, onClose, title, children, className = '' }: Props)
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
-      previous?.focus()
+      if (previous?.isConnected) previous.focus()
     }
   }, [open])
 

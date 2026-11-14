@@ -15,7 +15,7 @@ export function Toast({ toast }: { toast: ToastData | null }) {
   return (
     <div
       role="status" aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex justify-center px-4 sm:bottom-6"
+      className="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex justify-center pl-4 pr-24 sm:bottom-6 sm:px-4"
     >
       <AnimatePresence>
         {toast && (

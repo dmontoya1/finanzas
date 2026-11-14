@@ -8,6 +8,7 @@ import { Ctx } from './useApp'
 export function AppProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [householdLoading, setHouseholdLoading] = useState(false)
   const [household, setHousehold] = useState<Household | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [viewCurrency, setViewCurrencyState] = useState<Currency>(
@@ -41,6 +42,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // El estado derivado de la sesión se limpia en el callback, no en un efecto
     const apply = (s: Session | null) => {
       setSession(s)
+      setHouseholdLoading(!!s)
       if (!s) {
         setHousehold(null)
         setCategories([])
@@ -56,10 +58,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!session) return
-    fetchHousehold().then((h) => {
-      setHousehold(h)
-      return fetchCategories().then(setCategories)
-    })
+    fetchHousehold()
+      .then((h) => {
+        setHousehold(h)
+        return fetchCategories().then(setCategories)
+      })
+      .finally(() => setHouseholdLoading(false))
   }, [session, fetchHousehold, fetchCategories])
 
   // Recurrentes: una sola generación por sesión, sin bloquear el render
@@ -71,7 +75,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [household])
 
   return (
-    <Ctx.Provider value={{ session, loading, household, categories, viewCurrency, setViewCurrency, refreshHousehold, refreshCategories }}>
+    <Ctx.Provider value={{ session, loading, householdLoading, household, categories, viewCurrency, setViewCurrency, refreshHousehold, refreshCategories }}>
       {children}
     </Ctx.Provider>
   )

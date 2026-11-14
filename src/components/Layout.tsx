@@ -23,12 +23,12 @@ function isTyping(el: Element | null) {
 export function CurrencyToggle() {
   const { viewCurrency, setViewCurrency } = useApp()
   return (
-    <div className="relative flex rounded-full border border-line bg-surface-raised p-1 text-sm font-semibold">
+    <div className="relative flex rounded-full border border-line bg-surface-raised p-0.5 text-sm font-semibold">
       {(['EUR', 'COP'] as Currency[]).map((c) => (
         <button
           key={c}
           onClick={() => setViewCurrency(c)}
-          className={`relative z-10 rounded-full px-4 py-1.5 transition-colors ${
+          className={`relative z-10 min-h-11 rounded-full px-4 transition-colors ${
             viewCurrency === c ? 'text-surface' : 'text-text-soft hover:text-text'
           }`}
         >
