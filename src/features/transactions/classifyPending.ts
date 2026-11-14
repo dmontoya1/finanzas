@@ -45,22 +45,25 @@ export async function classifyPending(p: {
         .filter((t) => t.id !== tx.id && t.type === 'expense' && t.status === 'pending_review' && matchesPattern(t.merchant, pattern))
         .map((t) => t.id)
       if (ids.length) {
-        const { error: alsoErr } = await supabase.from('transactions')
-          .update({ category_id: categoryId, status: 'confirmed' }).in('id', ids).eq('status', 'pending_review')
+        // Only rows actually updated count (a partner may have confirmed some meanwhile).
+        const { data: updated, error: alsoErr } = await supabase.from('transactions')
+          .update({ category_id: categoryId, status: 'confirmed' }).in('id', ids).eq('status', 'pending_review').select('id')
         if (alsoErr) result.warning = `No se pudieron clasificar los demás: ${alsoErr.message}`
-        else result.alsoIds = ids
+        else result.alsoIds = (updated ?? []).map((r) => r.id as string)
       }
     }
   }
 
   result.undo = async () => {
-    const ids = [tx.id, ...result.alsoIds]
-    const { error: e1 } = await supabase.from('transactions')
-      .update({ category_id: null, status: 'pending_review' }).in('id', ids)
-    const e2 = result.ruleId
-      ? (await supabase.from('merchant_rules').delete().eq('id', result.ruleId)).error
-      : null
-    return e1?.message ?? e2?.message ?? null
+    // Guarded reverts: rows a partner changed meanwhile (other status/category) are left untouched.
+    const revert = (ids: string[]) => supabase.from('transactions')
+      .update({ category_id: null, status: 'pending_review' })
+      .in('id', ids).eq('status', 'confirmed').eq('category_id', categoryId)
+    const { error: e1 } = await revert([tx.id, ...result.alsoIds])
+    // Keep the learned rule if the revert failed, so state stays consistent with what the user sees.
+    if (e1 || !result.ruleId) return e1?.message ?? null
+    const { error: e2 } = await supabase.from('merchant_rules').delete().eq('id', result.ruleId)
+    return e2?.message ?? null
   }
   return result
 }

@@ -94,8 +94,8 @@ export function UpcomingTile({ items, view }: { items: UpcomingPayment[]; view: 
 
 const MAX_CHIPS = 4
 
-export function PendingTile({ items, categories, monthTxs, onClassify }: {
-  items: Transaction[]; categories: Category[]; monthTxs: Transaction[]
+export function PendingTile({ items, categories, monthTxs, onClassify, busy = false }: {
+  items: Transaction[]; categories: Category[]; monthTxs: Transaction[]; busy?: boolean
   onClassify: (t: Transaction, category: Category) => void
 }) {
   const a = useTile(4)
@@ -120,9 +120,9 @@ export function PendingTile({ items, categories, monthTxs, onClassify }: {
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {chips.map((c) => (
                 <button
-                  key={c.id} type="button" onClick={() => onClassify(t, c)}
+                  key={c.id} type="button" onClick={() => onClassify(t, c)} disabled={busy} aria-disabled={busy}
                   aria-label={`Clasificar ${t.merchant || 'comercio'} como ${c.name}`}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-3 text-sm hover:bg-text/5"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line px-3 text-sm hover:bg-text/5 disabled:cursor-wait disabled:opacity-50"
                 >
                   <span className="size-2.5 shrink-0 rounded-full" style={{ background: categoryColor(c.id) }} aria-hidden />
                   {c.emoji} {c.name}
@@ -130,9 +130,9 @@ export function PendingTile({ items, categories, monthTxs, onClassify }: {
               ))}
               {rest.length > 0 && (
                 <select
-                  key={`${t.id}-${rest.length}`} defaultValue="" aria-label={`Otra categoría para ${t.merchant || 'comercio'}`}
+                  key={`${t.id}-${rest.length}`} defaultValue="" aria-label={`Otra categoría para ${t.merchant || 'comercio'}`} disabled={busy}
                   onChange={(e) => { const c = rest.find((x) => x.id === e.target.value); if (c) onClassify(t, c) }}
-                  className="min-h-11 w-auto text-sm"
+                  className="min-h-11 w-auto text-sm disabled:cursor-wait disabled:opacity-50"
                 >
                   <option value="" disabled>Otra…</option>
                   {rest.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}

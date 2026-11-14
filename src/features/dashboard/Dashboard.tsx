@@ -83,7 +83,23 @@ export default function Dashboard() {
     await Promise.all([refresh(), loadMerchantRules()])
   }
 
+  // Re-entrancy guard: the ref blocks same-tick double taps, the state disables the UI.
+  const classifying = useRef(false)
+  const [classifyBusy, setClassifyBusy] = useState(false)
+
   async function classifyTx(t: Transaction, cat: Category) {
+    if (classifying.current) return
+    classifying.current = true
+    setClassifyBusy(true)
+    try {
+      await doClassify(t, cat)
+    } finally {
+      classifying.current = false
+      setClassifyBusy(false)
+    }
+  }
+
+  async function doClassify(t: Transaction, cat: Category) {
     const r = await classifyPending({ householdId: household!.id, tx: t, categoryId: cat.id, rules: merchantRules, pendingTxs: pending })
     if (r.error) {
       showToast({ message: `No se pudo clasificar: ${r.error}`, tone: 'error', onClose: () => showToast(null) })
@@ -119,7 +135,7 @@ export default function Dashboard() {
         <IncomeExpenseTiles income={income} expense={expense} view={viewCurrency} />
         <TopSpending transactions={monthTxs} categories={categories} view={viewCurrency} />
         <UpcomingTile items={upcoming} view={viewCurrency} />
-        <PendingTile items={pending} categories={categories} monthTxs={monthTxs} onClassify={classifyTx} />
+        <PendingTile items={pending} categories={categories} monthTxs={monthTxs} onClassify={classifyTx} busy={classifyBusy} />
         <RecentTransactions transactions={monthTxs} categories={categories} view={viewCurrency} />
       </div>
 
